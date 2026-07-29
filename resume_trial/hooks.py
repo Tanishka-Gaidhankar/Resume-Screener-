@@ -15,5 +15,14 @@ doc_events = {
     "Job Applicant": {
         "validate": "resume_trial.frappe_hooks.autofill_job_applicant",
         "on_update": "resume_trial.frappe_hooks.autofill_job_applicant",
-    }
+    },
+    "File": {
+        "after_insert": "resume_trial.frappe_hooks.on_file_attached",
+        "on_update": "resume_trial.frappe_hooks.on_file_attached",
+    },
 }
+
+
+
+
+

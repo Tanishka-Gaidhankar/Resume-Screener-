@@ -128,4 +128,6 @@ def test_resume_trial_hooks_structure():
     import resume_trial.hooks as hooks
     assert hooks.app_name == "resume_trial"
     assert "Job Applicant" in hooks.doc_events
+    assert "File" in hooks.doc_events
+
 

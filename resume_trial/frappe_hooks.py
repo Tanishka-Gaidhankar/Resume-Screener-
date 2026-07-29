@@ -130,3 +130,22 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
                     "rating": item.get("rating", ""),
                 },
             )
+
+
+def on_file_attached(doc: Any, method: str | None = None) -> None:
+    """Trigger auto-fill when a File is attached directly to a Job Applicant."""
+    if getattr(doc, "attached_to_doctype", None) == "Job Applicant" and getattr(doc, "attached_to_name", None):
+        frappe = _get_frappe()
+        if frappe:
+            try:
+                applicant = frappe.get_doc("Job Applicant", doc.attached_to_name)
+                autofill_job_applicant(applicant)
+                applicant.save(ignore_permissions=True)
+            except Exception as exc:
+                frappe.log_error(title="Resume Scanner File Attachment Error", message=str(exc))
+
+
+
+
+
+
