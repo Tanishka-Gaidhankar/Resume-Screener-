@@ -19,6 +19,8 @@ MOCK_LLM_RESPONSE = {
         "custom_jp": "30 Days",
         "custom_linkedin_profile": "https://linkedin.com/in/test",
         "custom_gap": False,
+        "rating": "Good Fit",
+        "applicant_rating": "4.5",
     },
     "custom_skill_matrix_table": [
         {
@@ -57,6 +59,8 @@ def test_process_resume_upload_custom_fields_schema(mock_groq, tmp_path):
     assert applicant["custom_qualification"] == "Bachelor of Technology"
     assert applicant["custom_experience"] == "5"
     assert applicant["permanent_location"] == "Nagpur"
+    assert applicant["rating"] == "Good Fit"
+    assert applicant["applicant_rating"] == "4.5"
     assert isinstance(applicant["custom_skill_matrix_table"], list)
     assert len(applicant["custom_skill_matrix_table"]) == 2
     assert applicant["custom_skill_matrix_table"][0]["skill"] == "Python"
@@ -99,6 +103,8 @@ def test_frappe_hooks_autofill_job_applicant(tmp_path):
         custom_jp="",
         custom_linkedin_profile="",
         custom_gap=False,
+        rating="",
+        applicant_rating="",
         cover_letter="",
         custom_skill_matrix_table=MockChildTable(),
     )
@@ -111,8 +117,11 @@ def test_frappe_hooks_autofill_job_applicant(tmp_path):
     assert mock_doc.custom_current_role == "Senior Developer"
     assert mock_doc.custom_qualification == "Bachelor of Technology"
     assert mock_doc.custom_experience == "5"
+    assert mock_doc.rating == "Good Fit"
+    assert mock_doc.applicant_rating == "4.5"
     assert len(mock_doc.custom_skill_matrix_table) == 2
     assert "Match Status: Match" in mock_doc.cover_letter
+
 
 
 

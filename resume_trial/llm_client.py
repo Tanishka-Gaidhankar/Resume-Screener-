@@ -93,7 +93,10 @@ class GroqClient:
             "   - 'upper_range': Expected salary if mentioned in resume, otherwise ''.\n"
             "   - 'custom_jp': Joining period or notice period if mentioned, otherwise ''.\n"
             "   - 'custom_linkedin_profile': LinkedIn URL if present, otherwise ''.\n"
-            "   - 'custom_gap': Boolean (true if employment/academic gap is detected, false otherwise).\n\n"
+            "   - 'custom_gap': Boolean (true if employment/academic gap is detected, false otherwise).\n"
+            "   - 'rating': Primary candidate match rating. MUST BE EXACTLY ONE OF: 'Good Fit', 'May be', or 'Not a Fit'.\n"
+            "   - 'applicant_rating': Primary candidate scoring rating (e.g. '4.5', '5.0', '3.5', or '2.0' based on overall fit).\n\n"
+
             "2. Populate 'custom_skill_matrix_table' as a list of objects based on candidate's skills and usage in resume/projects:\n"
             "   Each object in 'custom_skill_matrix_table' MUST have:\n"
             "   - 'skill': Skill name (e.g. 'Auto-cad 2D&3D', 'Revit', 'Microsoft Excel', 'Financial Management')\n"

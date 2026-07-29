@@ -83,6 +83,8 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "custom_jp": getattr(doc, "custom_jp", ""),
         "custom_linkedin_profile": getattr(doc, "custom_linkedin_profile", ""),
         "custom_gap": getattr(doc, "custom_gap", False),
+        "rating": getattr(doc, "rating", ""),
+        "applicant_rating": getattr(doc, "applicant_rating", ""),
     }
 
     try:
@@ -111,8 +113,11 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "custom_jp",
         "custom_linkedin_profile",
         "custom_gap",
+        "rating",
+        "applicant_rating",
         "cover_letter",
     ]:
+
         if field in applicant_data and applicant_data[field] is not None:
             setattr(doc, field, applicant_data[field])
 

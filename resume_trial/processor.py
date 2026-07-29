@@ -19,7 +19,10 @@ FIELDS_TO_EXTRACT = [
     "custom_jp",
     "custom_linkedin_profile",
     "custom_gap",
+    "rating",
+    "applicant_rating",
 ]
+
 
 
 def process_resume_upload(*, file_path: str | Path, job_requirements: str | list[dict[str, Any]] | None, existing_fields: dict[str, Any]) -> dict[str, Any]:
