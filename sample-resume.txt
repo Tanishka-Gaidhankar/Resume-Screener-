@@ -1,0 +1,4 @@
+John Doe
+Senior Python Developer
+Bachelor of Technology
+5 years experience in Flask and REST APIs
