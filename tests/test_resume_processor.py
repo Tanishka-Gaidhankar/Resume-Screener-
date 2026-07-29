@@ -115,9 +115,17 @@ def test_frappe_hooks_autofill_job_applicant(tmp_path):
     assert "Match Status: Match" in mock_doc.cover_letter
 
 
+
 def test_groq_client_raises_when_no_api_key(monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     with patch("resume_trial.llm_client._load_env_file"):
         client = GroqClient(api_key="")
         with pytest.raises(RuntimeError, match="GROQ_API_KEY is not set"):
             client.extract(resume_text="sample", job_requirements="sample", existing_fields={})
+
+
+def test_resume_trial_hooks_structure():
+    import resume_trial.hooks as hooks
+    assert hooks.app_name == "resume_trial"
+    assert "Job Applicant" in hooks.doc_events
+
