@@ -1,0 +1,12 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+recursive-include resume_trial *.json
+recursive-include resume_trial *.js
+recursive-include resume_trial *.css
+recursive-include resume_trial *.py
+recursive-include resume_trial *.html
+recursive-include resume_trial *.md
+recursive-include resume_trial *.txt
