@@ -10,24 +10,37 @@ import requests
 
 def _load_env_file() -> None:
     """Load variables from .env file into os.environ if not already set."""
-    env_path = Path(".env")
-    if not env_path.exists():
-        env_path = Path.cwd() / ".env"
-    if env_path.exists():
-        try:
-            content = env_path.read_text(encoding="utf-8")
-            for line in content.splitlines():
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-                elif ":" in line:
-                    k, v = line.split(":", 1)
-                    os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-        except Exception:
-            pass
+    search_paths = [
+        Path(".env"),
+        Path.cwd() / ".env",
+        Path(__file__).parent.parent / ".env",
+        Path(__file__).parent / ".env",
+    ]
+    try:
+        import frappe  # type: ignore
+        if hasattr(frappe, "get_site_path"):
+            search_paths.insert(0, Path(frappe.get_site_path(".env")))
+        if hasattr(frappe, "get_app_path"):
+            search_paths.insert(0, Path(frappe.get_app_path("resume_trial", "..", ".env")))
+    except Exception:
+        pass
+
+    for env_path in search_paths:
+        if env_path.exists():
+            try:
+                content = env_path.read_text(encoding="utf-8")
+                for line in content.splitlines():
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                    elif ":" in line:
+                        k, v = line.split(":", 1)
+                        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            except Exception:
+                pass
 
 
 def normalize_job_requirements(job_requirements: str | list[dict[str, Any]] | None) -> str:
@@ -47,9 +60,13 @@ def normalize_job_requirements(job_requirements: str | list[dict[str, Any]] | No
 def _get_frappe_api_key() -> str | None:
     try:
         import frappe  # type: ignore
-        return frappe.conf.get("groq_api_key") or frappe.conf.get("GROQ_API_KEY")
+        key = frappe.conf.get("groq_api_key") or frappe.conf.get("GROQ_API_KEY")
+        if key:
+            return str(key).strip()
     except Exception:
-        return None
+        pass
+    return None
+
 
 
 class GroqClient:
