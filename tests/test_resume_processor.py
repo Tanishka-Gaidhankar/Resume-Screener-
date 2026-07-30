@@ -140,3 +140,20 @@ def test_resume_trial_hooks_structure():
     assert "File" in hooks.doc_events
 
 
+def test_download_resume_from_url_google_drive(tmp_path):
+    from unittest.mock import MagicMock
+    from resume_trial.frappe_hooks import download_resume_from_url
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.headers = {"Content-Type": "application/pdf"}
+    mock_response.cookies = {}
+    mock_response.iter_content.return_value = [b"PDF content data"]
+
+    with patch("requests.Session.get", return_value=mock_response):
+        downloaded = download_resume_from_url("https://drive.google.com/file/d/123456789/view?usp=sharing")
+        assert downloaded is not None
+        assert Path(downloaded).exists()
+
+
+

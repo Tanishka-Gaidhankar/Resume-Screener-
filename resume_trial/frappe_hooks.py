@@ -16,15 +16,90 @@ def _get_frappe():
         return None
 
 
-def find_resume_file_path(doc: Any) -> str | None:
-    """Resolve file path for attached resume on a Frappe Job Applicant document."""
-    frappe = _get_frappe()
-    file_url = getattr(doc, "resume_attachment", None) or getattr(doc, "file_url", None)
+import re
+import tempfile
+import requests
 
+
+def download_resume_from_url(url: str) -> str | None:
+    """Download a file from an HTTP/HTTPS URL or Google Drive link to a local temp file."""
+    frappe = _get_frappe()
+    download_url = url.strip()
+
+    # Convert Google Drive file view links to direct download link
+    if "drive.google.com" in download_url or "docs.google.com" in download_url:
+        match = re.search(r"/d/([a-zA-Z0-9_-]+)", download_url) or re.search(r"id=([a-zA-Z0-9_-]+)", download_url)
+        if match:
+            file_id = match.group(1)
+            download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+
+    try:
+        session = requests.Session()
+        res = session.get(download_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+
+        # Handle Google Drive virus scan warning redirect cookie if needed
+        for key, value in res.cookies.items():
+            if key.startswith("download_warning"):
+                confirm_url = f"{download_url}&confirm={value}"
+                res = session.get(confirm_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+                break
+
+        res.raise_for_status()
+
+        ext = ".pdf"
+        content_type = res.headers.get("Content-Type", "").lower()
+        if "word" in content_type or "docx" in content_type or url.endswith(".docx"):
+            ext = ".docx"
+        elif "plain" in content_type or "text" in content_type or url.endswith(".txt"):
+            ext = ".txt"
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        for chunk in res.iter_content(chunk_size=8192):
+            if chunk:
+                temp_file.write(chunk)
+        temp_file.close()
+        return temp_file.name
+    except Exception as exc:
+        if frappe:
+            frappe.log_error(title="Resume Scanner URL Download Error", message=f"Failed to download from '{url}': {exc}")
+        return None
+
+
+def find_resume_file_path(doc: Any) -> str | None:
+    """Resolve file path or download remote URL for attached resume on a Frappe Job Applicant document."""
+    frappe = _get_frappe()
+
+    # Collect candidate file paths or URLs from all potential resume fields
+    possible_values = []
+    for fieldname in [
+        "resume_attachment",
+        "resume_link",
+        "file_url",
+        "resume",
+        "custom_resume_link",
+        "attachment",
+        "link",
+    ]:
+        val = getattr(doc, fieldname, None)
+        if val and isinstance(val, str) and val.strip():
+            possible_values.append(val.strip())
+
+    # 1. Check if any value is an HTTP/HTTPS URL or Google Drive link
+    for val in possible_values:
+        if val.startswith("http://") or val.startswith("https://") or "drive.google.com" in val or "docs.google.com" in val:
+            temp_path = download_resume_from_url(val)
+            if temp_path and os.path.exists(temp_path):
+                return temp_path
+
+    # 2. Check File doctype attached records in Frappe DB
     if frappe and getattr(doc, "name", None):
         file_records = []
-        if file_url:
-            file_records = frappe.get_all("File", filters={"file_url": file_url}, fields=["name", "file_url"])
+        for val in possible_values:
+            if not val.startswith("http://") and not val.startswith("https://"):
+                file_records = frappe.get_all("File", filters={"file_url": val}, fields=["name", "file_url"])
+                if file_records:
+                    break
+
         if not file_records:
             file_records = frappe.get_all(
                 "File",
@@ -35,6 +110,7 @@ def find_resume_file_path(doc: Any) -> str | None:
                 fields=["name", "file_url"],
                 order_by="creation desc",
             )
+
         if file_records:
             try:
                 file_doc = frappe.get_doc("File", file_records[0].name)
@@ -43,32 +119,37 @@ def find_resume_file_path(doc: Any) -> str | None:
                     return full_path
             except Exception:
                 pass
-            if not file_url:
-                file_url = file_records[0].get("file_url")
 
-    if not file_url:
-        return None
+            file_url_val = file_records[0].get("file_url")
+            if file_url_val:
+                possible_values.insert(0, file_url_val)
 
-    if frappe:
-        clean_url = file_url.lstrip("/")
-        site_path = frappe.get_site_path(clean_url)
-        if os.path.exists(site_path):
-            return site_path
+    # 3. Check local file paths on Frappe site
+    for val in possible_values:
+        if val.startswith("http://") or val.startswith("https://"):
+            continue
 
-        filename = Path(clean_url).name
-        if "private/files/" in clean_url or clean_url.startswith("private/"):
-            priv_path = frappe.get_site_path("private", "files", filename)
-            if os.path.exists(priv_path):
-                return priv_path
+        if Path(val).exists():
+            return str(Path(val))
 
-        pub_path = frappe.get_site_path("public", "files", filename)
-        if os.path.exists(pub_path):
-            return pub_path
+        if frappe:
+            clean_url = val.lstrip("/")
+            site_path = frappe.get_site_path(clean_url)
+            if os.path.exists(site_path):
+                return site_path
 
-    if Path(file_url).exists():
-        return str(Path(file_url))
+            filename = Path(clean_url).name
+            if "private/files/" in clean_url or clean_url.startswith("private/"):
+                priv_path = frappe.get_site_path("private", "files", filename)
+                if os.path.exists(priv_path):
+                    return priv_path
+
+            pub_path = frappe.get_site_path("public", "files", filename)
+            if os.path.exists(pub_path):
+                return pub_path
 
     return None
+
 
 
 def fetch_job_requirements(doc: Any) -> str:

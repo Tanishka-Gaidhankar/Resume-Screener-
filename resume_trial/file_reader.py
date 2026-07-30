@@ -4,47 +4,62 @@ from pathlib import Path
 from typing import Optional
 
 
-def extract_text(file_path: str | Path) -> str:
-    """Extract text from a resume file. Supports plain text, PDF, and DOCX.
+def _extract_pdf(path: Path) -> str:
+    try:
+        from unstructured.partition.pdf import partition_pdf  # type: ignore
+    except Exception:
+        partition_pdf = None
 
-    This is a lightweight trial implementation that uses plain text directly
-    and can be extended to pdfplumber/python-docx in a full app.
-    """
-    path = Path(file_path)
-    if path.suffix.lower() == ".txt":
-        return path.read_text(encoding="utf-8")
-
-    if path.suffix.lower() == ".pdf":
+    if partition_pdf is not None:
         try:
-            from unstructured.partition.pdf import partition_pdf  # type: ignore
+            elements = partition_pdf(filename=str(path))
+            text = "\n".join(element.text for element in elements if getattr(element, "text", "").strip())
+            if text.strip():
+                return text.strip()
         except Exception:
-            partition_pdf = None
+            pass
 
-        if partition_pdf is not None:
-            try:
-                elements = partition_pdf(filename=str(path))
-                text = "\n".join(element.text for element in elements if getattr(element, "text", "").strip())
-                if text.strip():
-                    return text.strip()
-            except Exception:
-                pass
+    import pdfplumber  # type: ignore
 
-        try:
-            import pdfplumber  # type: ignore
-        except ImportError as exc:  # pragma: no cover
-            raise RuntimeError("pdfplumber is required for PDF extraction") from exc
+    with pdfplumber.open(str(path)) as pdf:
+        pages = [page.extract_text() or "" for page in pdf.pages]
+    return "\n\n".join(pages).strip()
 
-        with pdfplumber.open(str(path)) as pdf:
-            pages = [page.extract_text() or "" for page in pdf.pages]
-        return "\n\n".join(pages).strip()
 
-    if path.suffix.lower() == ".docx":
-        try:
-            import docx  # type: ignore
-        except ImportError as exc:  # pragma: no cover
-            raise RuntimeError("python-docx is required for DOCX extraction") from exc
+def _extract_docx(path: Path) -> str:
+    import docx  # type: ignore
 
-        document = docx.Document(str(path))
-        return "\n".join(paragraph.text for paragraph in document.paragraphs if paragraph.text).strip()
+    document = docx.Document(str(path))
+    return "\n".join(paragraph.text for paragraph in document.paragraphs if paragraph.text).strip()
 
-    raise ValueError(f"Unsupported file type: {path.suffix}")
+
+def extract_text(file_path: str | Path) -> str:
+    """Extract text from a resume file. Supports plain text, PDF, and DOCX with robust fallbacks."""
+    path = Path(file_path)
+    suffix = path.suffix.lower()
+
+    if suffix == ".txt":
+        return path.read_text(encoding="utf-8", errors="ignore").strip()
+
+    if suffix == ".pdf":
+        return _extract_pdf(path)
+
+    if suffix == ".docx":
+        return _extract_docx(path)
+
+    # Fallback for temp files or missing extensions
+    try:
+        return _extract_pdf(path)
+    except Exception:
+        pass
+
+    try:
+        return _extract_docx(path)
+    except Exception:
+        pass
+
+    try:
+        return path.read_text(encoding="utf-8", errors="ignore").strip()
+    except Exception as exc:
+        raise ValueError(f"Unsupported or unreadable file type: {path}") from exc
+
