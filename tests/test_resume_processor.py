@@ -9,6 +9,10 @@ from resume_trial.llm_client import GroqClient
 
 MOCK_LLM_RESPONSE = {
     "fields": {
+        "applicant_name": "John Doe",
+        "email_id": "john@example.com",
+        "phone_number": "9876543210",
+        "designation": "Senior Developer",
         "custom_current_role": "Senior Developer",
         "custom_qualification": "Bachelor of Technology",
         "custom_experience": "5",
@@ -22,6 +26,7 @@ MOCK_LLM_RESPONSE = {
         "rating": "Good Fit",
         "applicant_rating": "4.5",
     },
+
     "custom_skill_matrix_table": [
         {
             "skill": "Python",

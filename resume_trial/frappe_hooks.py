@@ -180,6 +180,10 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
     job_reqs = fetch_job_requirements(doc)
 
     existing_fields = {
+        "applicant_name": getattr(doc, "applicant_name", ""),
+        "email_id": getattr(doc, "email_id", ""),
+        "phone_number": getattr(doc, "phone_number", ""),
+        "designation": getattr(doc, "designation", ""),
         "custom_current_role": getattr(doc, "custom_current_role", ""),
         "custom_qualification": getattr(doc, "custom_qualification", ""),
         "custom_experience": getattr(doc, "custom_experience", ""),
@@ -209,8 +213,12 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
 
     applicant_data = result.get("applicant", {})
 
-    # Set Screening tab fields on Frappe doc
+    # Set Screening and Basic Detail fields on Frappe doc
     for field in [
+        "applicant_name",
+        "email_id",
+        "phone_number",
+        "designation",
         "custom_current_role",
         "custom_qualification",
         "custom_experience",
@@ -225,6 +233,7 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "applicant_rating",
         "cover_letter",
     ]:
+
 
         if field in applicant_data and applicant_data[field] is not None:
             setattr(doc, field, applicant_data[field])
@@ -257,6 +266,23 @@ def on_file_attached(doc: Any, method: str | None = None) -> None:
                 applicant.save(ignore_permissions=True)
             except Exception as exc:
                 frappe.log_error(title="Resume Scanner File Attachment Error", message=str(exc))
+
+
+def trigger_resume_parse(docname: str) -> dict:
+    """Whitelisted endpoint callable from Frappe client JS custom button."""
+    frappe = _get_frappe()
+    if not frappe:
+        return {"status": "error", "message": "Frappe framework not available"}
+
+    try:
+        doc = frappe.get_doc("Job Applicant", docname)
+        autofill_job_applicant(doc)
+        doc.save(ignore_permissions=True)
+        return {"status": "success", "message": "Resume parsed successfully"}
+    except Exception as exc:
+        frappe.log_error(title="Resume Scanner Button Error", message=str(exc))
+        return {"status": "error", "message": str(exc)}
+
 
 
 

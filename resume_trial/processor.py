@@ -9,6 +9,10 @@ from .llm_client import GroqClient
 
 
 FIELDS_TO_EXTRACT = [
+    "applicant_name",
+    "email_id",
+    "phone_number",
+    "designation",
     "custom_current_role",
     "custom_qualification",
     "custom_experience",
@@ -22,6 +26,7 @@ FIELDS_TO_EXTRACT = [
     "rating",
     "applicant_rating",
 ]
+
 
 
 
