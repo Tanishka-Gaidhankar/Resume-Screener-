@@ -109,6 +109,39 @@ def sanitize_skill_category(raw_category: str | None) -> str:
     return "Technical"
 
 
+ALLOWED_EXPERIENCE_LEVELS = [
+    "Basic Awareness",
+    "Beginner",
+    "Working Knowledge",
+    "Proficient",
+    "Expert",
+]
+
+
+def sanitize_experience_level(raw_level: str | None) -> str:
+    """Sanitize experience level to strictly match Frappe select options."""
+    if not raw_level or not isinstance(raw_level, str):
+        return "Working Knowledge"
+
+    level = raw_level.strip()
+    if level in ALLOWED_EXPERIENCE_LEVELS:
+        return level
+
+    level_lower = level.lower()
+    if any(k in level_lower for k in ["basic awareness", "awareness"]):
+        return "Basic Awareness"
+    if any(k in level_lower for k in ["basic knowledge", "basic", "beginner", "novice"]):
+        return "Beginner"
+    if any(k in level_lower for k in ["working", "intermediate", "moderate"]):
+        return "Working Knowledge"
+    if any(k in level_lower for k in ["proficient", "advanced", "skilled"]):
+        return "Proficient"
+    if any(k in level_lower for k in ["expert", "master", "senior"]):
+        return "Expert"
+
+    return "Working Knowledge"
+
+
 def build_applicant_payload(existing_fields: dict[str, Any], llm_response: dict[str, Any]) -> dict[str, Any]:
     applicant = copy.deepcopy(existing_fields)
     fields = llm_response.get("fields", {})
@@ -124,10 +157,12 @@ def build_applicant_payload(existing_fields: dict[str, Any], llm_response: dict[
             if isinstance(item, dict):
                 sanitized_item = copy.deepcopy(item)
                 sanitized_item["skill_category"] = sanitize_skill_category(item.get("skill_category"))
+                sanitized_item["experience_level"] = sanitize_experience_level(item.get("experience_level"))
                 sanitized_matrix.append(sanitized_item)
 
     applicant["custom_skill_matrix_table"] = sanitized_matrix
     applicant["cover_letter"] = llm_response.get("cover_letter", "")
 
     return applicant
+
 

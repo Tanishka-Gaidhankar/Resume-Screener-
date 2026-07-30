@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .processor import process_resume_upload, sanitize_skill_category
+from .processor import process_resume_upload, sanitize_skill_category, sanitize_experience_level
+
 
 
 
@@ -238,9 +239,9 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
                 {
                     "skill": item.get("skill", ""),
                     "skill_category": sanitize_skill_category(item.get("skill_category", "")),
-                    "experience_level": item.get("experience_level", ""),
-
+                    "experience_level": sanitize_experience_level(item.get("experience_level", "")),
                     "rating": item.get("rating", ""),
+
                 },
             )
 

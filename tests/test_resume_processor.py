@@ -156,14 +156,17 @@ def test_download_resume_from_url_google_drive(tmp_path):
         assert Path(downloaded).exists()
 
 
-def test_sanitize_skill_category():
-    from resume_trial.processor import sanitize_skill_category, ALLOWED_SKILL_CATEGORIES
+def test_sanitize_experience_level():
+    from resume_trial.processor import sanitize_experience_level, ALLOWED_EXPERIENCE_LEVELS
 
-    assert sanitize_skill_category("Digital / IT") == "Digital / IT"
-    assert sanitize_skill_category("Drafting / Software") == "Digital / IT"
-    assert sanitize_skill_category("Civil Engineering") == "Technical"
-    assert sanitize_skill_category("Project Management") == "Planning"
-    assert sanitize_skill_category("Unknown") in ALLOWED_SKILL_CATEGORIES
+    assert sanitize_experience_level("Basic Knowledge") == "Beginner"
+    assert sanitize_experience_level("Basic Awareness") == "Basic Awareness"
+    assert sanitize_experience_level("Beginner") == "Beginner"
+    assert sanitize_experience_level("Working Knowledge") == "Working Knowledge"
+    assert sanitize_experience_level("Proficient") == "Proficient"
+    assert sanitize_experience_level("Expert") == "Expert"
+    assert sanitize_experience_level("Unknown") in ALLOWED_EXPERIENCE_LEVELS
+
 
 
 
