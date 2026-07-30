@@ -44,12 +44,21 @@ def normalize_job_requirements(job_requirements: str | list[dict[str, Any]] | No
     return str(job_requirements)
 
 
+def _get_frappe_api_key() -> str | None:
+    try:
+        import frappe  # type: ignore
+        return frappe.conf.get("groq_api_key") or frappe.conf.get("GROQ_API_KEY")
+    except Exception:
+        return None
+
+
 class GroqClient:
     """Groq API client for Frappe resume screening autofill."""
 
     def __init__(self, api_key: str | None = None):
         _load_env_file()
-        self.api_key = api_key or os.getenv("GROQ_API_KEY")
+        self.api_key = api_key or os.getenv("GROQ_API_KEY") or _get_frappe_api_key()
+
 
     def extract(
         self,
