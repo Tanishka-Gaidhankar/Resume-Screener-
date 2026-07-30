@@ -67,6 +67,48 @@ def validate_schema(response: dict[str, Any]) -> dict[str, Any]:
     return response
 
 
+ALLOWED_SKILL_CATEGORIES = [
+    "Personal",
+    "Technical",
+    "Professional",
+    "Planning",
+    "Leadership",
+    "Legal",
+    "Digital / IT",
+    "Commercial",
+]
+
+
+def sanitize_skill_category(raw_category: str | None) -> str:
+    """Sanitize skill category to strictly match Frappe select options."""
+    if not raw_category or not isinstance(raw_category, str):
+        return "Technical"
+
+    cat = raw_category.strip()
+    if cat in ALLOWED_SKILL_CATEGORIES:
+        return cat
+
+    cat_lower = cat.lower()
+    if any(k in cat_lower for k in ["digital", "it", "software", "drafting", "cad", "programming", "tool", "excel", "code", "dev"]):
+        return "Digital / IT"
+    if any(k in cat_lower for k in ["tech", "engineering", "civil", "rcc", "structure"]):
+        return "Technical"
+    if any(k in cat_lower for k in ["plan", "project", "schedule", "mgmt", "management"]):
+        return "Planning"
+    if any(k in cat_lower for k in ["lead", "team", "manager"]):
+        return "Leadership"
+    if any(k in cat_lower for k in ["legal", "law", "contract"]):
+        return "Legal"
+    if any(k in cat_lower for k in ["commercial", "finance", "billing", "cost", "account"]):
+        return "Commercial"
+    if any(k in cat_lower for k in ["personal", "soft", "communication"]):
+        return "Personal"
+    if any(k in cat_lower for k in ["professional"]):
+        return "Professional"
+
+    return "Technical"
+
+
 def build_applicant_payload(existing_fields: dict[str, Any], llm_response: dict[str, Any]) -> dict[str, Any]:
     applicant = copy.deepcopy(existing_fields)
     fields = llm_response.get("fields", {})
@@ -75,7 +117,17 @@ def build_applicant_payload(existing_fields: dict[str, Any], llm_response: dict[
         if not applicant.get(field):
             applicant[field] = fields.get(field, "" if field != "custom_gap" else False)
 
-    applicant["custom_skill_matrix_table"] = llm_response.get("custom_skill_matrix_table", [])
+    raw_matrix = llm_response.get("custom_skill_matrix_table", [])
+    sanitized_matrix = []
+    if isinstance(raw_matrix, list):
+        for item in raw_matrix:
+            if isinstance(item, dict):
+                sanitized_item = copy.deepcopy(item)
+                sanitized_item["skill_category"] = sanitize_skill_category(item.get("skill_category"))
+                sanitized_matrix.append(sanitized_item)
+
+    applicant["custom_skill_matrix_table"] = sanitized_matrix
     applicant["cover_letter"] = llm_response.get("cover_letter", "")
 
     return applicant
+

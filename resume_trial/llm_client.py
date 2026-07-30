@@ -126,8 +126,9 @@ class GroqClient:
             "2. Populate 'custom_skill_matrix_table' as a list of objects based on candidate's skills and usage in resume/projects:\n"
             "   Each object in 'custom_skill_matrix_table' MUST have:\n"
             "   - 'skill': Skill name (e.g. 'Auto-cad 2D&3D', 'Revit', 'Microsoft Excel', 'Financial Management')\n"
-            "   - 'skill_category': Category (e.g. 'Drafting / Software', 'Civil Engineering', 'Finance', 'Management')\n"
+            "   - 'skill_category': MUST BE EXACTLY ONE OF: 'Personal', 'Technical', 'Professional', 'Planning', 'Leadership', 'Legal', 'Digital / IT', 'Commercial'\n"
             "   - 'experience_level': Proficiency description ('Expert', 'Proficient', 'Working Knowledge', 'Basic Knowledge', or 'No Knowledge')\n"
+
             "   - 'rating': Rating string matching legend:\n"
             "     * '* - No Knowledge'\n"
             "     * '** - Basic Knowledge'\n"

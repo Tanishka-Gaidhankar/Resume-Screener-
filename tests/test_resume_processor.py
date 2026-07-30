@@ -156,4 +156,15 @@ def test_download_resume_from_url_google_drive(tmp_path):
         assert Path(downloaded).exists()
 
 
+def test_sanitize_skill_category():
+    from resume_trial.processor import sanitize_skill_category, ALLOWED_SKILL_CATEGORIES
+
+    assert sanitize_skill_category("Digital / IT") == "Digital / IT"
+    assert sanitize_skill_category("Drafting / Software") == "Digital / IT"
+    assert sanitize_skill_category("Civil Engineering") == "Technical"
+    assert sanitize_skill_category("Project Management") == "Planning"
+    assert sanitize_skill_category("Unknown") in ALLOWED_SKILL_CATEGORIES
+
+
+
 

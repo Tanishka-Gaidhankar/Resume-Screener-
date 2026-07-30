@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .processor import process_resume_upload
+from .processor import process_resume_upload, sanitize_skill_category
+
 
 
 def _get_frappe():
@@ -236,8 +237,9 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
                 "custom_skill_matrix_table",
                 {
                     "skill": item.get("skill", ""),
-                    "skill_category": item.get("skill_category", ""),
+                    "skill_category": sanitize_skill_category(item.get("skill_category", "")),
                     "experience_level": item.get("experience_level", ""),
+
                     "rating": item.get("rating", ""),
                 },
             )
