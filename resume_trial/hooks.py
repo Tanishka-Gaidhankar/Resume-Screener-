@@ -22,6 +22,16 @@ doc_events = {
     },
 }
 
+doctype_js = {
+    "Job Applicant": "public/js/job_applicant.js",
+}
+
+doctype_list_js = {
+    "Job Applicant": "public/js/job_applicant_list.js",
+}
+
+
+
 
 
 

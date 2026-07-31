@@ -284,6 +284,39 @@ def trigger_resume_parse(docname: str) -> dict:
         return {"status": "error", "message": str(exc)}
 
 
+def bulk_trigger_resume_parse(docnames: list[str] | str) -> dict:
+    """Whitelisted endpoint to parse multiple Job Applicants in bulk from List View."""
+    frappe = _get_frappe()
+    if not frappe:
+        return {"status": "error", "message": "Frappe framework not available"}
+
+    if isinstance(docnames, str):
+        import json
+        try:
+            docnames = json.loads(docnames)
+        except Exception:
+            docnames = [docnames]
+
+    success_count = 0
+    errors = []
+
+    for name in docnames:
+        try:
+            doc = frappe.get_doc("Job Applicant", name)
+            autofill_job_applicant(doc)
+            doc.save(ignore_permissions=True)
+            success_count += 1
+        except Exception as exc:
+            errors.append(f"{name}: {exc}")
+
+    if errors:
+        frappe.log_error(title="Bulk Resume Parse Errors", message="\n".join(errors))
+
+    msg = f"Successfully parsed {success_count} out of {len(docnames)} candidate(s)."
+    return {"status": "success", "message": msg}
+
+
+
 
 
 
