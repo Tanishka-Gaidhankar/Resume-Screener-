@@ -152,8 +152,12 @@ def build_applicant_payload(existing_fields: dict[str, Any], llm_response: dict[
     fields = llm_response.get("fields", {})
 
     for field in FIELDS_TO_EXTRACT:
-        if not applicant.get(field):
+        if field in ["rating", "applicant_rating"]:
+            if fields.get(field):
+                applicant[field] = fields[field]
+        elif not applicant.get(field):
             applicant[field] = fields.get(field, "" if field != "custom_gap" else False)
+
 
     raw_matrix = llm_response.get("custom_skill_matrix_table", [])
     sanitized_matrix = []

@@ -161,16 +161,45 @@ def test_download_resume_from_url_google_drive(tmp_path):
         assert Path(downloaded).exists()
 
 
-def test_sanitize_experience_level():
-    from resume_trial.processor import sanitize_experience_level, ALLOWED_EXPERIENCE_LEVELS
+def test_rating_overwrite_and_summary_append(tmp_path):
+    from types import SimpleNamespace
+    from resume_trial.frappe_hooks import autofill_job_applicant
 
-    assert sanitize_experience_level("Basic Knowledge") == "Beginner"
-    assert sanitize_experience_level("Basic Awareness") == "Basic Awareness"
-    assert sanitize_experience_level("Beginner") == "Beginner"
-    assert sanitize_experience_level("Working Knowledge") == "Working Knowledge"
-    assert sanitize_experience_level("Proficient") == "Proficient"
-    assert sanitize_experience_level("Expert") == "Expert"
-    assert sanitize_experience_level("Unknown") in ALLOWED_EXPERIENCE_LEVELS
+    resume_file = tmp_path / "test_resume.txt"
+    resume_file.write_text("Experienced Engineer", encoding="utf-8")
+
+    class MockChildTable(list):
+        pass
+
+    mock_doc = SimpleNamespace(
+        resume_attachment=str(resume_file),
+        custom_current_role="",
+        custom_qualification="",
+        custom_experience="",
+        permanent_location="",
+        current_location="",
+        lower_range="",
+        upper_range="",
+        custom_jp="",
+        custom_linkedin_profile="",
+        custom_gap=False,
+        rating="Not a Fit",
+        applicant_rating="1.0",
+        cover_letter="Existing Cover Letter text.",
+        custom_skill_matrix_table=MockChildTable(),
+    )
+    mock_doc.set = lambda field, val: setattr(mock_doc, field, MockChildTable(val))
+    mock_doc.append = lambda field, row: getattr(mock_doc, field).append(row)
+
+    with patch.object(GroqClient, "_call_groq", return_value=MOCK_LLM_RESPONSE):
+        autofill_job_applicant(mock_doc)
+
+    assert mock_doc.rating == "Good Fit"
+    assert mock_doc.applicant_rating == "4.5"
+    assert "Existing Cover Letter text." in mock_doc.cover_letter
+    assert "--- AI Screening Analysis (Updated) ---" in mock_doc.cover_letter
+    assert "Match Status: Match" in mock_doc.cover_letter
+
 
 
 

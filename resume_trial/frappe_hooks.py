@@ -265,17 +265,26 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "custom_gap",
         "rating",
         "applicant_rating",
-        "cover_letter",
     ]:
-        if field in applicant_data and applicant_data[field] is not None:
-            setattr(doc, field, applicant_data[field])
+        if field in ["rating", "applicant_rating"]:
+            if applicant_data.get(field):
+                setattr(doc, field, applicant_data[field])
+        elif field in applicant_data and applicant_data[field] is not None:
+            if not getattr(doc, field, None):
+                setattr(doc, field, applicant_data[field])
 
-    # Populate AI Summary across potential Frappe field aliases
-    cover_letter_val = applicant_data.get("cover_letter", "")
-    if cover_letter_val:
+    # Populate AI Summary across potential Frappe field aliases (append if text exists)
+    new_summary = str(applicant_data.get("cover_letter", "") or "").strip()
+    if new_summary:
         for summary_field in ["cover_letter", "ai_summary", "custom_ai_summary", "summary"]:
             if hasattr(doc, summary_field):
-                setattr(doc, summary_field, cover_letter_val)
+                existing_text = str(getattr(doc, summary_field, "") or "").strip()
+                if existing_text and new_summary not in existing_text:
+                    updated_summary = f"{existing_text}\n\n--- AI Screening Analysis (Updated) ---\n{new_summary}"
+                else:
+                    updated_summary = new_summary
+                setattr(doc, summary_field, updated_summary)
+
 
     # Safely update custom_skill_matrix_table in-place to preserve row keys and append new skills
     matrix_items = applicant_data.get("custom_skill_matrix_table", [])
