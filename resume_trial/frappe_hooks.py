@@ -314,19 +314,22 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
 
         # Fallback sanitize any remaining unfilled pre-existing rows
         for row in _get_doc_field(doc, "custom_skill_matrix_table", []):
-
             r_cat = getattr(row, "skill_category", None) or (row.get("skill_category") if isinstance(row, dict) else None)
             r_exp = getattr(row, "experience_level", None) or (row.get("experience_level") if isinstance(row, dict) else None)
-            if not r_cat or not r_exp:
-                cat_val = sanitize_skill_category(r_cat)
-                exp_val = sanitize_experience_level(r_exp)
-                if isinstance(row, dict):
-                    row["skill_category"] = cat_val
-                    row["experience_level"] = exp_val
-                else:
-                    setattr(row, "skill_category", cat_val)
-                    setattr(row, "experience_level", exp_val)
+            r_rat = getattr(row, "rating", None) or (row.get("rating") if isinstance(row, dict) else None)
 
+            cat_val = sanitize_skill_category(r_cat) if r_cat else "Technical"
+            exp_val = sanitize_experience_level(r_exp) if r_exp else "Working Knowledge"
+            rat_val = r_rat if r_rat else "*** - Working Knowledge"
+
+            if isinstance(row, dict):
+                row["skill_category"] = cat_val
+                row["experience_level"] = exp_val
+                row["rating"] = rat_val
+            else:
+                setattr(row, "skill_category", cat_val)
+                setattr(row, "experience_level", exp_val)
+                setattr(row, "rating", rat_val)
 
 
 def on_file_attached(doc: Any, method: str | None = None) -> None:
@@ -336,8 +339,9 @@ def on_file_attached(doc: Any, method: str | None = None) -> None:
         if frappe:
             try:
                 applicant = frappe.get_doc("Job Applicant", doc.attached_to_name)
+                applicant.flags.ignore_mandatory = True
                 autofill_job_applicant(applicant)
-                applicant.save(ignore_permissions=True)
+                applicant.save(ignore_permissions=True, ignore_version=True)
             except Exception as exc:
                 frappe.log_error(title="Resume Scanner File Attachment Error", message=str(exc))
 
@@ -351,8 +355,9 @@ def trigger_resume_parse(docname: str) -> dict:
 
     try:
         doc = frappe.get_doc("Job Applicant", docname)
+        doc.flags.ignore_mandatory = True
         autofill_job_applicant(doc)
-        doc.save(ignore_permissions=True)
+        doc.save(ignore_permissions=True, ignore_version=True)
         return {"status": "success", "message": "Resume parsed successfully"}
     except Exception as exc:
         frappe.log_error(title="Resume Scanner Button Error", message=str(exc))
@@ -380,8 +385,9 @@ def bulk_trigger_resume_parse(docnames: list[str] | str) -> dict:
     for name in docnames:
         try:
             doc = frappe.get_doc("Job Applicant", name)
+            doc.flags.ignore_mandatory = True
             autofill_job_applicant(doc)
-            doc.save(ignore_permissions=True)
+            doc.save(ignore_permissions=True, ignore_version=True)
             success_count += 1
         except Exception as exc:
             errors.append(f"{name}: {exc}")
@@ -391,6 +397,7 @@ def bulk_trigger_resume_parse(docnames: list[str] | str) -> dict:
 
     msg = f"Successfully parsed {success_count} out of {len(docnames)} candidate(s)."
     return {"status": "success", "message": msg}
+
 
 
 
