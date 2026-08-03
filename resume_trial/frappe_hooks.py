@@ -9,6 +9,16 @@ from .processor import process_resume_upload, sanitize_skill_category, sanitize_
 
 
 
+try:
+    import frappe  # type: ignore
+    _whitelist = frappe.whitelist
+except ImportError:
+    def _whitelist(*args, **kwargs):
+        if args and callable(args[0]):
+            return args[0]
+        return lambda fn: fn
+
+
 def _get_frappe():
     """Dynamically import frappe module if available inside Frappe bench execution."""
     try:
@@ -16,6 +26,7 @@ def _get_frappe():
         return frappe
     except ImportError:
         return None
+
 
 
 import re
@@ -268,6 +279,7 @@ def on_file_attached(doc: Any, method: str | None = None) -> None:
                 frappe.log_error(title="Resume Scanner File Attachment Error", message=str(exc))
 
 
+@_whitelist()
 def trigger_resume_parse(docname: str) -> dict:
     """Whitelisted endpoint callable from Frappe client JS custom button."""
     frappe = _get_frappe()
@@ -284,8 +296,10 @@ def trigger_resume_parse(docname: str) -> dict:
         return {"status": "error", "message": str(exc)}
 
 
+@_whitelist()
 def bulk_trigger_resume_parse(docnames: list[str] | str) -> dict:
     """Whitelisted endpoint to parse multiple Job Applicants in bulk from List View."""
+
     frappe = _get_frappe()
     if not frappe:
         return {"status": "error", "message": "Frappe framework not available"}
