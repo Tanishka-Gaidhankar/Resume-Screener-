@@ -1,7 +1,7 @@
 [
   {
     "role": "Project Engineer",
-    "description": "Oversee construction and project management activities. Develop and implement project plans and schedules. Monitor and report on project progress and performance. Ensure compliance with project specifications and standards. Provide technical support and troubleshooting. Collaborate with project teams and stakeholders. Prepare and present project reports and documentation. Stay updated with advancements in construction and project management practices.",
+    "description": "Oversee construction and project management activities.\nDevelop and implement project plans and schedules.\nMonitor and report on project progress and performance.\nEnsure compliance with project specifications and standards.\nProvide technical support and troubleshooting.\nCollaborate with project teams and stakeholders.\nPrepare and present project reports and documentation.\nStay updated with advancements in construction and project management practices.",
     "Industry Type": "Engineering & Construction",
     "Key Skills": [
       "Construction project management",
@@ -10,10 +10,42 @@
   },
   {
     "role": "Marketing Manager",
-    "description": "Evaluating and optimizing marketing and pricing strategies. Analyzing market trends and preparing forecasts. Generating new business leads. Increasing brand awareness and market share. Coordinating marketing strategies with the sales, financial, public relations, and production departments. Developing and managing the marketing department's budget. Overseeing branding, advertising, and promotional campaigns. Managing the marketing department's staff. Promoting our brand at trade shows and major industry-related events. Keeping informed of marketing strategies and trends."
+    "description": "Evaluating and optimizing marketing and pricing strategies.\nAnalyzing market trends and preparing forecasts.\nGenerating new business leads.\nIncreasing brand awareness and market share.\nCoordinating marketing strategies with the sales, financial, public relations, and production departments.\nDeveloping and managing the marketing department's budget.\nOverseeing branding, advertising, and promotional campaigns.\nManaging the marketing department's staff.\nPromoting our brand at trade shows and major industry-related events.\nKeeping informed of marketing strategies and trends."
   },
   {
     "role": "Civil Engineer",
-    "description": "Assist in the design and analysis of civil engineering projects. Conduct site inspections and assessments. Collaborate with senior engineers and project teams. Ensure compliance with project specifications and standards. Provide technical support and troubleshooting. Prepare and present civil engineering reports and documentation. Maintain and update civil engineering records and documentation. Stay updated with advancements in civil engineering practices."
+    "description": "Assist in the design and analysis of civil engineering projects.\nConduct site inspections and assessments.\nCollaborate with senior engineers and project teams.\nEnsure compliance with project specifications and standards.\nProvide technical support and troubleshooting.\nPrepare and present civil engineering reports and documentation.\nMaintain and update civil engineering records and documentation.\nStay updated with advancements in civil engineering practices."
+  },
+  {
+    "role": "Intern",
+    "description": "Assist in the design and analysis of civil engineering projects.\nConduct site inspections and assessments.\nCollaborate with senior engineers and project teams.\nEnsure compliance with project specifications and standards.\nProvide technical support and troubleshooting.\nPrepare and present civil engineering reports and documentation.\nMaintain and update civil engineering records and documentation.\nStay updated with advancements in civil engineering practices."
+  },
+  {
+    "role": "Engineer - Tender & Contracts",
+    "description": "Prepare and manage tender and contract documents.\nConduct risk assessments and evaluations.\nCollaborate with project teams and stakeholders.\nEnsure compliance with tender and contract standards and regulations.\nProvide technical support and troubleshooting.\nMonitor and report on tender and contract performance.\nMaintain and update tender and contract records and documentation.\nStay updated with advancements in tender and contract management practices."
+  },
+  {
+    "role": "Engineer - Construction/ Project Management",
+    "description": "Oversee construction and project management activities.\nDevelop and implement project plans and schedules.\nMonitor and report on project progress and performance.\nEnsure compliance with project specifications and standards.\nProvide technical support and troubleshooting.\nCollaborate with project teams and stakeholders.\nPrepare and present project reports and documentation.\nStay updated with advancements in construction and project management practices."
+  },
+  {
+    "role": "Structural Draftsman",
+    "description": "Prepare detailed structural drawings using AutoCAD.\nCollaborate with engineers and project teams.\nEnsure drawings meet project specifications and standards.\nRevise and update drawings based on feedback.\nConduct site visits to gather information for drawings.\nMaintain and organize drawing files and records.\nProvide technical support and troubleshooting.\nStay updated with advancements in AutoCAD drafting technologies."
+  },
+  {
+    "role": "Civil Engineer - ( NDT Testing )",
+    "description": "Conduct Non-Destructive Testing (NDT) on civil engineering projects.\nAnalyze and interpret NDT results.\nCollaborate with other engineers and project teams.\nEnsure compliance with NDT standards and regulations.\nProvide technical support and troubleshooting.\nPrepare and present NDT reports and documentation.\nMaintain and update NDT records and documentation.\nStay updated with advancements in NDT technologies and practices."
+  },
+  {
+    "role": "Structural Engineer - ( Design / Audit )",
+    "description": "Design and analyze structural projects.\nConduct structural audits and assessments.\nCollaborate with other engineers and project teams.\nEnsure compliance with structural standards and regulations.\nProvide technical support and troubleshooting.\nPrepare and present structural reports and documentation.\nMaintain and update structural records and documentation.\nStay updated with advancements in structural engineering practices."
+  },
+  {
+    "role": "Junior Architect",
+    "description": "Designing in 3D softwares, preparing CAD Drawings and site management.\nShould be excellent in creative designing and think and develop out of the box designs.\nExperience with commercial, Hospitality and residential projects.\nAbility to work well with a team and meet deadlines.\nCoordinate project updates using emails, messengers, voice chats & teleconferences.\nExcellent interpersonal communication skills."
+  },
+  {
+    "role": "Accountant",
+    "description": "Complying with all company, local, state, and federal accounting and financial regulations.\nCompiling, analyzing, and reporting financial data.\nCreating periodic reports, such as balance sheets, profit & loss statements, etc.\nPresenting data to managers, investors, and other entities.\nMaintaining accurate financial records.\nPerforming audits and resolving discrepancies.\nComputing taxes.\nKeeping informed about current legislation relating to finance and accounting.\nAssisting management in the decision-making process by preparing budgets and financial forecasts."
   }
 ]

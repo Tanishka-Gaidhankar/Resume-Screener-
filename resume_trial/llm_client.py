@@ -49,12 +49,19 @@ def normalize_job_requirements(job_requirements: str | list[dict[str, Any]] | No
     if isinstance(job_requirements, str):
         return job_requirements
     if isinstance(job_requirements, list):
-        return "\n".join(
-            f"Role: {item.get('role', 'Unknown')}\nDescription: {item.get('description', '')}"
-            for item in job_requirements
-            if isinstance(item, dict)
-        )
+        formatted_items = []
+        for item in job_requirements:
+            if isinstance(item, dict):
+                role = item.get("role", "Unknown")
+                desc = item.get("description", "")
+                if isinstance(desc, list):
+                    desc_str = "\n".join(f"- {d}" for d in desc)
+                else:
+                    desc_str = str(desc)
+                formatted_items.append(f"Role: {role}\nDescription:\n{desc_str}")
+        return "\n\n".join(formatted_items)
     return str(job_requirements)
+
 
 
 def _get_frappe_api_key() -> str | None:
