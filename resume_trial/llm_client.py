@@ -129,7 +129,10 @@ class GroqClient:
             "   - 'applicant_rating': Primary candidate scoring rating (e.g. '4.5', '5.0', '3.5', or '2.0' based on overall fit).\n\n"
 
             "2. Populate 'custom_skill_matrix_table' as a list of objects based on candidate's skills and usage in resume/projects:\n"
+            "   IMPORTANT FOR PRE-EXISTING SKILLS:\n"
+            "   If pre-existing skills are listed in EXISTING APPLICANT FIELDS, you MUST evaluate each pre-existing skill first and include it in 'custom_skill_matrix_table' with its evaluated 'skill_category', 'experience_level', and 'rating'. Afterwards, append any additional skills extracted from the candidate's resume.\n\n"
             "   Each object in 'custom_skill_matrix_table' MUST have:\n"
+
             "   - 'skill': Skill name (e.g. 'Auto-cad 2D&3D', 'Revit', 'Microsoft Excel', 'Financial Management')\n"
             "   - 'skill_category': MUST BE EXACTLY ONE OF: 'Personal', 'Technical', 'Professional', 'Planning', 'Leadership', 'Legal', 'Digital / IT', 'Commercial'\n"
             "   - 'experience_level': MUST BE EXACTLY ONE OF: 'Basic Awareness', 'Beginner', 'Working Knowledge', 'Proficient', 'Expert'\n"

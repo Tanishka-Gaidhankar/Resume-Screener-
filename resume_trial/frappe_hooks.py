@@ -179,6 +179,17 @@ def fetch_job_requirements(doc: Any) -> str:
     return ""
 
 
+def _get_doc_field(doc: Any, field: str, default: Any = None) -> Any:
+    """Safely get field attribute from Frappe Document, SimpleNamespace, or dict."""
+    if hasattr(doc, field):
+        val = getattr(doc, field, default)
+        return val if val is not None else default
+    if isinstance(doc, dict):
+        val = doc.get(field, default)
+        return val if val is not None else default
+    return default
+
+
 def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
     """Frappe hook handler called when a Job Applicant document is saved/updated."""
     frappe = _get_frappe()
@@ -189,6 +200,17 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         return
 
     job_reqs = fetch_job_requirements(doc)
+
+    existing_skills = []
+    existing_rows_map = {}
+    skill_table = _get_doc_field(doc, "custom_skill_matrix_table", [])
+    for row in skill_table or []:
+        sk = getattr(row, "skill", None) or (row.get("skill") if isinstance(row, dict) else None)
+        if sk and str(sk).strip():
+            clean_sk = str(sk).strip()
+            existing_skills.append(clean_sk)
+            existing_rows_map[clean_sk.lower()] = row
+
 
     existing_fields = {
         "applicant_name": getattr(doc, "applicant_name", ""),
@@ -207,6 +229,7 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "custom_gap": getattr(doc, "custom_gap", False),
         "rating": getattr(doc, "rating", ""),
         "applicant_rating": getattr(doc, "applicant_rating", ""),
+        "existing_skills": existing_skills,
     }
 
     try:
@@ -244,26 +267,66 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
         "applicant_rating",
         "cover_letter",
     ]:
-
-
         if field in applicant_data and applicant_data[field] is not None:
             setattr(doc, field, applicant_data[field])
 
-    # Set custom_skill_matrix_table child table
+    # Populate AI Summary across potential Frappe field aliases
+    cover_letter_val = applicant_data.get("cover_letter", "")
+    if cover_letter_val:
+        for summary_field in ["cover_letter", "ai_summary", "custom_ai_summary", "summary"]:
+            if hasattr(doc, summary_field):
+                setattr(doc, summary_field, cover_letter_val)
+
+    # Safely update custom_skill_matrix_table in-place to preserve row keys and append new skills
     matrix_items = applicant_data.get("custom_skill_matrix_table", [])
     if isinstance(matrix_items, list):
-        doc.set("custom_skill_matrix_table", [])
         for item in matrix_items:
-            doc.append(
-                "custom_skill_matrix_table",
-                {
-                    "skill": item.get("skill", ""),
-                    "skill_category": sanitize_skill_category(item.get("skill_category", "")),
-                    "experience_level": sanitize_experience_level(item.get("experience_level", "")),
-                    "rating": item.get("rating", ""),
+            if not isinstance(item, dict):
+                continue
+            skill_name = str(item.get("skill", "")).strip()
+            if not skill_name:
+                continue
+            cat = sanitize_skill_category(item.get("skill_category", ""))
+            exp = sanitize_experience_level(item.get("experience_level", ""))
+            rat = item.get("rating", "")
 
-                },
-            )
+            skill_key = skill_name.lower()
+            if skill_key in existing_rows_map:
+                row = existing_rows_map[skill_key]
+                if isinstance(row, dict):
+                    row["skill_category"] = cat
+                    row["experience_level"] = exp
+                    row["rating"] = rat
+                else:
+                    setattr(row, "skill_category", cat)
+                    setattr(row, "experience_level", exp)
+                    setattr(row, "rating", rat)
+            else:
+                doc.append(
+                    "custom_skill_matrix_table",
+                    {
+                        "skill": skill_name,
+                        "skill_category": cat,
+                        "experience_level": exp,
+                        "rating": rat,
+                    },
+                )
+
+        # Fallback sanitize any remaining unfilled pre-existing rows
+        for row in _get_doc_field(doc, "custom_skill_matrix_table", []):
+
+            r_cat = getattr(row, "skill_category", None) or (row.get("skill_category") if isinstance(row, dict) else None)
+            r_exp = getattr(row, "experience_level", None) or (row.get("experience_level") if isinstance(row, dict) else None)
+            if not r_cat or not r_exp:
+                cat_val = sanitize_skill_category(r_cat)
+                exp_val = sanitize_experience_level(r_exp)
+                if isinstance(row, dict):
+                    row["skill_category"] = cat_val
+                    row["experience_level"] = exp_val
+                else:
+                    setattr(row, "skill_category", cat_val)
+                    setattr(row, "experience_level", exp_val)
+
 
 
 def on_file_attached(doc: Any, method: str | None = None) -> None:
