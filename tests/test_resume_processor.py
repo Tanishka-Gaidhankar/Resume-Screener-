@@ -201,6 +201,37 @@ def test_rating_overwrite_and_summary_append(tmp_path):
     assert "Match Status: Match" in mock_doc.cover_letter
 
 
+def test_ensure_skill_exists_fallback():
+    from resume_trial.frappe_hooks import ensure_skill_exists
+    # When frappe is not imported, returns original skill string
+    assert ensure_skill_exists("Project Management") == "Project Management"
+    assert ensure_skill_exists("") == ""
+
+
+def test_ensure_skill_exists_creates_skill_record():
+    from unittest.mock import MagicMock
+    from resume_trial.frappe_hooks import ensure_skill_exists
+
+    mock_frappe = MagicMock()
+    mock_frappe.db.exists.side_effect = lambda *args: False if args[0] == "Skill" else True
+    mock_frappe.db.get_value.return_value = None
+
+    mock_skill_doc = MagicMock()
+    mock_skill_doc.name = "Project Management"
+    mock_frappe.get_doc.return_value = mock_skill_doc
+
+    with patch("resume_trial.frappe_hooks._get_frappe", return_value=mock_frappe):
+        result = ensure_skill_exists("Project Management")
+        assert result == "Project Management"
+        mock_frappe.get_doc.assert_called_once_with({
+            "doctype": "Skill",
+            "skill_name": "Project Management",
+            "name": "Project Management",
+        })
+        mock_skill_doc.insert.assert_called_once()
+
+
+
 
 
 

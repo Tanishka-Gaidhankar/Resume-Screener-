@@ -20,6 +20,9 @@ frappe.listview_settings['Job Applicant'] = {
                         freeze_message: __('Parsing Resumes with AI...'),
                         callback: function(r) {
                             if (!r.exc && r.message) {
+                                if (listview.clear_checked_items) {
+                                    listview.clear_checked_items();
+                                }
                                 listview.refresh();
                                 frappe.show_alert({
                                     message: __(r.message.message || 'Resumes parsed successfully!'),

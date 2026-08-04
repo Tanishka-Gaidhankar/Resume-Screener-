@@ -190,9 +190,81 @@ def _get_doc_field(doc: Any, field: str, default: Any = None) -> Any:
     return default
 
 
+def ensure_skill_exists(skill_name: str) -> str:
+    """Ensure a Skill master document exists in Frappe DB for Link field validation.
+
+    Returns the valid Skill document name/ID.
+    """
+    frappe = _get_frappe()
+    if not frappe or not skill_name or not isinstance(skill_name, str):
+        return skill_name
+
+    clean_name = skill_name.strip()
+    if not clean_name:
+        return clean_name
+
+    try:
+        # Check if 'Skill' DocType exists in current site schema
+        if not frappe.db.exists("DocType", "Skill"):
+            return clean_name
+
+        # 1. Exact match by primary key name
+        if frappe.db.exists("Skill", clean_name):
+            return clean_name
+
+        # 2. Match by skill_name field
+        existing = frappe.db.get_value("Skill", {"skill_name": clean_name}, "name")
+        if existing:
+            return existing
+
+        # 3. Auto-create missing Skill record in DB
+        try:
+            skill_doc = frappe.get_doc({
+                "doctype": "Skill",
+                "skill_name": clean_name,
+                "name": clean_name,
+            })
+            skill_doc.flags.ignore_mandatory = True
+            skill_doc.flags.ignore_permissions = True
+            skill_doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
+            return skill_doc.name or clean_name
+        except Exception:
+            try:
+                skill_doc = frappe.new_doc("Skill")
+                if hasattr(skill_doc, "skill_name"):
+                    skill_doc.skill_name = clean_name
+                skill_doc.name = clean_name
+                skill_doc.flags.ignore_mandatory = True
+                skill_doc.flags.ignore_permissions = True
+                skill_doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
+                return skill_doc.name or clean_name
+            except Exception:
+                pass
+    except Exception as exc:
+        if frappe:
+            frappe.log_error(
+                title="Resume Scanner Auto Skill Creation Warning",
+                message=f"Could not auto-create Skill master record for '{clean_name}': {exc}"
+            )
+
+    return clean_name
+
+
 def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
     """Frappe hook handler called when a Job Applicant document is saved/updated."""
     frappe = _get_frappe()
+
+    # Ensure pre-existing skills in child table exist in Frappe Skill DocType master
+    skill_table = _get_doc_field(doc, "custom_skill_matrix_table", [])
+    for row in skill_table or []:
+        sk = getattr(row, "skill", None) or (row.get("skill") if isinstance(row, dict) else None)
+        if sk and str(sk).strip():
+            valid_sk = ensure_skill_exists(str(sk).strip())
+            if isinstance(row, dict):
+                row["skill"] = valid_sk
+            else:
+                setattr(row, "skill", valid_sk)
+
     resume_path = find_resume_file_path(doc)
     if not resume_path or not os.path.exists(resume_path):
         if frappe and getattr(doc, "resume_attachment", None):
@@ -295,18 +367,22 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
             skill_name = str(item.get("skill", "")).strip()
             if not skill_name:
                 continue
+
+            valid_skill = ensure_skill_exists(skill_name)
             cat = sanitize_skill_category(item.get("skill_category", ""))
             exp = sanitize_experience_level(item.get("experience_level", ""))
             rat = item.get("rating", "")
 
-            skill_key = skill_name.lower()
+            skill_key = valid_skill.lower()
             if skill_key in existing_rows_map:
                 row = existing_rows_map[skill_key]
                 if isinstance(row, dict):
+                    row["skill"] = valid_skill
                     row["skill_category"] = cat
                     row["experience_level"] = exp
                     row["rating"] = rat
                 else:
+                    setattr(row, "skill", valid_skill)
                     setattr(row, "skill_category", cat)
                     setattr(row, "experience_level", exp)
                     setattr(row, "rating", rat)
@@ -314,7 +390,7 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
                 doc.append(
                     "custom_skill_matrix_table",
                     {
-                        "skill": skill_name,
+                        "skill": valid_skill,
                         "skill_category": cat,
                         "experience_level": exp,
                         "rating": rat,
@@ -323,6 +399,14 @@ def autofill_job_applicant(doc: Any, method: str | None = None) -> None:
 
         # Fallback sanitize any remaining unfilled pre-existing rows
         for row in _get_doc_field(doc, "custom_skill_matrix_table", []):
+            r_sk = getattr(row, "skill", None) or (row.get("skill") if isinstance(row, dict) else None)
+            if r_sk and str(r_sk).strip():
+                valid_sk = ensure_skill_exists(str(r_sk).strip())
+                if isinstance(row, dict):
+                    row["skill"] = valid_sk
+                else:
+                    setattr(row, "skill", valid_sk)
+
             r_cat = getattr(row, "skill_category", None) or (row.get("skill_category") if isinstance(row, dict) else None)
             r_exp = getattr(row, "experience_level", None) or (row.get("experience_level") if isinstance(row, dict) else None)
             r_rat = getattr(row, "rating", None) or (row.get("rating") if isinstance(row, dict) else None)
@@ -367,6 +451,7 @@ def trigger_resume_parse(docname: str) -> dict:
         doc.flags.ignore_mandatory = True
         autofill_job_applicant(doc)
         doc.save(ignore_permissions=True, ignore_version=True)
+        frappe.db.commit()
         return {"status": "success", "message": "Resume parsed successfully"}
     except Exception as exc:
         frappe.log_error(title="Resume Scanner Button Error", message=str(exc))
@@ -397,12 +482,15 @@ def bulk_trigger_resume_parse(docnames: list[str] | str) -> dict:
             doc.flags.ignore_mandatory = True
             autofill_job_applicant(doc)
             doc.save(ignore_permissions=True, ignore_version=True)
+            frappe.db.commit()
             success_count += 1
         except Exception as exc:
             errors.append(f"{name}: {exc}")
 
     if errors:
         frappe.log_error(title="Bulk Resume Parse Errors", message="\n".join(errors))
+        if success_count == 0:
+            frappe.throw(f"Failed to parse candidates: {'; '.join(errors)}")
 
     msg = f"Successfully parsed {success_count} out of {len(docnames)} candidate(s)."
     return {"status": "success", "message": msg}
