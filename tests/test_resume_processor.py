@@ -141,8 +141,7 @@ def test_groq_client_raises_when_no_api_key(monkeypatch):
 def test_resume_trial_hooks_structure():
     import resume_trial.hooks as hooks
     assert hooks.app_name == "resume_trial"
-    assert "Job Applicant" in hooks.doc_events
-    assert "File" in hooks.doc_events
+    assert hooks.doc_events == {}
 
 
 def test_download_resume_from_url_google_drive(tmp_path):
@@ -161,7 +160,7 @@ def test_download_resume_from_url_google_drive(tmp_path):
         assert Path(downloaded).exists()
 
 
-def test_rating_overwrite_and_summary_append(tmp_path):
+def test_rating_overwrite_and_single_summary_formatting(tmp_path):
     from types import SimpleNamespace
     from resume_trial.frappe_hooks import autofill_job_applicant
 
@@ -196,8 +195,9 @@ def test_rating_overwrite_and_summary_append(tmp_path):
 
     assert mock_doc.rating == "Good Fit"
     assert mock_doc.applicant_rating == "4.5"
-    assert "Existing Cover Letter text." in mock_doc.cover_letter
-    assert "--- AI Screening Analysis (Updated) ---" in mock_doc.cover_letter
+    assert "Existing Cover Letter text." not in mock_doc.cover_letter
+    assert "--- AI Screening Analysis (Updated) ---" not in mock_doc.cover_letter
+    assert mock_doc.cover_letter.startswith("AI Analysis")
     assert "Match Status: Match" in mock_doc.cover_letter
 
 

@@ -9,18 +9,8 @@ app_license = "MIT"
 
 # Document Events
 # ------------------
-# Hook on Job Applicant document validation/save in Frappe
-
-doc_events = {
-    "Job Applicant": {
-        "validate": "resume_trial.frappe_hooks.autofill_job_applicant",
-        "on_update": "resume_trial.frappe_hooks.autofill_job_applicant",
-    },
-    "File": {
-        "after_insert": "resume_trial.frappe_hooks.on_file_attached",
-        "on_update": "resume_trial.frappe_hooks.on_file_attached",
-    },
-}
+# Auto-triggers disabled: AI parsing is executed exclusively via explicit "AI Parse" button click
+doc_events = {}
 
 doctype_js = {
     "Job Applicant": "public/js/job_applicant.js",
